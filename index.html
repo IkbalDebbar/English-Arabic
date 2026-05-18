@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Vocabulary Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <h1 class="logo" data-en="English Quiz" data-ar="اختبار اللغة الإنجليزية">English Quiz</h1>
+                <p class="tagline" data-en="Master Vocabulary with Ease" data-ar="اتقن المفردات بسهولة">Master Vocabulary with Ease</p>
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn active" id="enBtn" data-lang="en">English</button>
+                <button class="lang-btn" id="arBtn" data-lang="ar">العربية</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="vocabulary" data-en="Vocabulary" data-ar="المفردات">Vocabulary</button>
+            <button class="tab-btn" data-tab="quiz" data-en="Quiz" data-ar="اختبار">Quiz</button>
+            <button class="tab-btn" data-tab="revision" data-en="Revision" data-ar="المراجعة">Revision</button>
+        </nav>
+
+        <!-- Vocabulary Section -->
+        <section id="vocabulary" class="tab-content active">
+            <h2 class="section-title" data-en="Vocabulary List" data-ar="قائمة المفردات">Vocabulary List</h2>
+            
+            <!-- Add New Word -->
+            <div class="card add-word-card">
+                <h3 class="card-title" data-en="Add New Word" data-ar="إضافة كلمة جديدة">Add New Word</h3>
+                <form id="addWordForm" class="form-grid">
+                    <div class="form-group">
+                        <label data-en="English Word" data-ar="الكلمة الإنجليزية">English Word</label>
+                        <input type="text" id="englishWord" placeholder="e.g., Brilliant" required>
+                        <span id="englishStatus" class="translation-status"></span>
+                    </div>
+                    <div class="form-group">
+                        <label data-en="Arabic Translation" data-ar="الترجمة العربية">Arabic Translation</label>
+                        <input type="text" id="arabicWord" placeholder="مثل: رائع" required>
+                        <span id="arabicStatus" class="translation-status"></span>
+                    </div>
+                    <div class="form-group">
+                        <label data-en="Example Sentence" data-ar="جملة مثال">Example Sentence (Optional)</label>
+                        <input type="text" id="exampleSentence" placeholder="He is a brilliant student">
+                        <span id="exampleStatus" class="translation-status"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-en="Add Word" data-ar="إضافة كلمة">Add Word</button>
+                </form>
+            </div>
+
+            <!-- Words List -->
+            <div id="wordsList" class="words-container">
+                <!-- Words will be added here dynamically -->
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz" class="tab-content">
+            <h2 class="section-title" data-en="Quiz" data-ar="الاختبار">Quiz</h2>
+            
+            <!-- Quiz Menu -->
+            <div id="quizMenu" class="quiz-menu">
+                <div class="card quiz-intro">
+                    <h3 class="card-title" data-en="Select Quiz Type" data-ar="اختر نوع الاختبار">Select Quiz Type</h3>
+                    <div class="quiz-options">
+                        <button class="btn btn-quiz" id="mcqBtn" data-type="mcq" data-en="Multiple Choice" data-ar="الاختيار من متعدد">
+                            <span class="quiz-icon">🎯</span>
+                            <span class="quiz-label" data-en="Multiple Choice Questions" data-ar="أسئلة الاختيار من متعدد">Multiple Choice</span>
+                        </button>
+                        <button class="btn btn-quiz" id="fillBtn" data-type="fill" data-en="Fill in the Blank" data-ar="ملء الفراغات">
+                            <span class="quiz-icon">📝</span>
+                            <span class="quiz-label" data-en="Fill in the Blank" data-ar="ملء الفراغات">Fill in the Blank</span>
+                        </button>
+                        <button class="btn btn-quiz" id="matchBtn" data-type="match" data-en="Matching" data-ar="المطابقة">
+                            <span class="quiz-icon">🔗</span>
+                            <span class="quiz-label" data-en="Matching Exercise" data-ar="تمرين المطابقة">Matching</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Container (hidden by default) -->
+            <div id="quizContainer" class="quiz-container" style="display: none;">
+                <div class="quiz-header">
+                    <div class="progress-info">
+                        <span class="progress-text" data-en="Question" data-ar="السؤال"></span>
+                        <span id="questionNumber">1</span> / <span id="totalQuestions">10</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- MCQ Section -->
+                <div id="mcqSection" class="quiz-section">
+                    <div class="card question-card">
+                        <h3 id="mcqQuestion" class="question-text"></h3>
+                        <div id="mcqOptions" class="options-container">
+                            <!-- Options will be generated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fill in the Blank Section -->
+                <div id="fillSection" class="quiz-section">
+                    <div class="card question-card">
+                        <h3 id="fillQuestion" class="question-text"></h3>
+                        <input type="text" id="fillAnswer" class="fill-input" placeholder="Type your answer">
+                    </div>
+                </div>
+
+                <!-- Matching Section -->
+                <div id="matchSection" class="quiz-section">
+                    <div class="card question-card">
+                        <h3 class="section-subtitle" data-en="Match the pairs" data-ar="طابق بين الكلمات">Match the pairs</h3>
+                        <div class="matching-container">
+                            <div class="match-column">
+                                <h4 class="match-header" data-en="English" data-ar="الإنجليزية">English</h4>
+                                <div id="matchLeft" class="match-items">
+                                    <!-- Items will be generated -->
+                                </div>
+                            </div>
+                            <div class="match-column">
+                                <h4 class="match-header" data-en="Arabic" data-ar="العربية">Arabic</h4>
+                                <div id="matchRight" class="match-items">
+                                    <!-- Items will be generated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Controls -->
+                <div class="quiz-controls">
+                    <button class="btn btn-secondary" id="checkAnswerBtn" data-en="Check Answer" data-ar="تحقق من الإجابة">Check Answer</button>
+                    <button class="btn btn-primary" id="nextBtn" data-en="Next Question" data-ar="السؤال التالي">Next Question</button>
+                    <button class="btn btn-danger" id="restartQuizBtn" data-en="Restart" data-ar="إعادة تشغيل">Restart</button>
+                </div>
+
+                <!-- Feedback -->
+                <div id="feedback" class="feedback"></div>
+            </div>
+        </section>
+
+        <!-- Revision Section -->
+        <section id="revision" class="tab-content">
+            <h2 class="section-title" data-en="Quick Revision" data-ar="المراجعة السريعة">Quick Revision</h2>
+            
+            <div class="card revision-card">
+                <div id="revisionContent" class="revision-content">
+                    <!-- Revision cards will be added here -->
+                </div>
+                <div class="revision-controls" id="revisionControls">
+                    <button class="btn btn-secondary" id="flipBtn" data-en="Flip" data-ar="قلب">Flip</button>
+                    <button class="btn btn-primary" id="nextRevisionBtn" data-en="Next" data-ar="التالي">Next</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Score Section -->
+        <section id="scoreSection" class="score-section" style="display: none;">
+            <div class="card score-card">
+                <h2 class="score-title" data-en="Quiz Complete!" data-ar="تم إكمال الاختبار!">Quiz Complete!</h2>
+                <div class="score-display">
+                    <div class="score-number" id="scoreNumber">0/0</div>
+                    <div class="score-percentage" id="scorePercentage">0%</div>
+                </div>
+                <div class="score-message" id="scoreMessage"></div>
+                <button class="btn btn-primary" id="restartBtn" data-en="Back to Quiz Menu" data-ar="العودة إلى قائمة الاختبار">Back to Quiz Menu</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p data-en="Made for English Learners" data-ar="من أجل متعلمي اللغة الإنجليزية">Made for English Learners</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
