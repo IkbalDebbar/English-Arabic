@@ -84,6 +84,14 @@
                             <span class="quiz-icon">🔗</span>
                             <span class="quiz-label" data-en="Matching Exercise" data-ar="تمرين المطابقة">Matching</span>
                         </button>
+                        <button class="btn btn-quiz" id="spellingBtn" data-type="spelling" data-en="Spelling" data-ar="الإملاء">
+                            <span class="quiz-icon">🔊</span>
+                            <span class="quiz-label" data-en="Spelling Quiz" data-ar="اختبار الإملاء">Spelling</span>
+                        </button>
+                        <button class="btn btn-quiz" id="listeningBtn" data-type="listening" data-en="Listening" data-ar="الاستماع">
+                            <span class="quiz-icon">👂</span>
+                            <span class="quiz-label" data-en="Listening Comprehension" data-ar="فهم المسموع">Listening</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -95,8 +103,41 @@
                         <span class="progress-text" data-en="Question" data-ar="السؤال"></span>
                         <span id="questionNumber">1</span> / <span id="totalQuestions">10</span>
                     </div>
+                    <div class="quiz-score-info">
+                        <div>
+                            <div class="score-label" data-en="Score" data-ar="الدرجة">Score</div>
+                            <div id="liveScore">0</div>
+                        </div>
+                        <div>
+                            <div class="score-label" data-en="Correct" data-ar="صحيح">Correct</div>
+                            <div id="liveCorrect">0</div>
+                        </div>
+                        <div>
+                            <div class="score-label" data-en="Incorrect" data-ar="خاطئ">Incorrect</div>
+                            <div id="liveIncorrect">0</div>
+                        </div>
+                        <div>
+                            <div class="score-label" data-en="Attempts" data-ar="المحاولات">Attempts</div>
+                            <div id="liveAttempts">0</div>
+                        </div>
+                    </div>
                     <div class="progress-bar">
                         <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- MCQ Choice Section -->
+                <div id="mcqChoiceMenu" class="quiz-section" style="display: none;">
+                    <div class="card quiz-intro">
+                        <h3 class="card-title" data-en="Choose MCQ Mode" data-ar="اختر نمط الاختيار">Choose MCQ Mode</h3>
+                        <div class="quiz-options">
+                            <button class="btn btn-quiz" id="mcqEnglishBtn" data-en="English to Arabic" data-ar="من الإنجليزية إلى العربية">
+                                <span class="quiz-label" data-en="English to Arabic" data-ar="من الإنجليزية إلى العربية">English to Arabic</span>
+                            </button>
+                            <button class="btn btn-quiz" id="mcqArabicBtn" data-en="Arabic to English" data-ar="من العربية إلى الإنجليزية">
+                                <span class="quiz-label" data-en="Arabic to English" data-ar="من العربية إلى الإنجليزية">Arabic to English</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -111,10 +152,50 @@
                 </div>
 
                 <!-- Fill in the Blank Section -->
-                <div id="fillSection" class="quiz-section">
+                <div id="fillChoiceMenu" class="quiz-section" style="display: none;">
+                    <div class="card quiz-intro">
+                        <h3 class="card-title" data-en="Choose Fill Mode" data-ar="اختر وضع الملء">Choose Fill Mode</h3>
+                        <div class="quiz-options">
+                            <button class="btn btn-quiz" id="fillEnglishBtn" data-en="English to Arabic" data-ar="من الإنجليزية إلى العربية">
+                                <span class="quiz-label" data-en="English to Arabic" data-ar="من الإنجليزية إلى العربية">English to Arabic</span>
+                            </button>
+                            <button class="btn btn-quiz" id="fillArabicBtn" data-en="Arabic to English" data-ar="من العربية إلى الإنجليزية">
+                                <span class="quiz-label" data-en="Arabic to English" data-ar="من العربية إلى الإنجليزية">Arabic to English</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="fillSection" class="quiz-section" style="display: none;">
                     <div class="card question-card">
                         <h3 id="fillQuestion" class="question-text"></h3>
                         <input type="text" id="fillAnswer" class="fill-input" placeholder="Type your answer">
+                    </div>
+                </div>
+
+                <!-- Spelling Quiz Section -->
+                <div id="spellingSection" class="quiz-section" style="display: none;">
+                    <div class="card question-card">
+                        <h3 class="section-subtitle" data-en="Listen and Type" data-ar="استمع واكتب">Listen and Type</h3>
+                        <h3 id="spellingQuestion" class="question-text"></h3>
+                        <p class="spelling-instruction" data-en="Click the speaker icon to hear the word pronunciation" data-ar="اضغط على أيقونة الصوت لسماع نطق الكلمة">Click the speaker to hear pronunciation</p>
+                        <div class="spelling-controls">
+                            <button class="btn btn-primary" id="spellingPlayBtn" data-en="Play" data-ar="تشغيل">🔊 Play</button>
+                        </div>
+                        <input type="text" id="spellingAnswer" class="fill-input" placeholder="Type what you hear">
+                    </div>
+                </div>
+
+                <!-- Listening Comprehension Section -->
+                <div id="listeningSection" class="quiz-section" style="display: none;">
+                    <div class="card question-card">
+                        <h3 class="section-subtitle" data-en="Listen and Choose" data-ar="استمع واختر">Listen and Choose</h3>
+                        <div class="listening-controls">
+                            <button class="btn btn-primary" id="listeningPlayBtn" data-en="Play Audio" data-ar="تشغيل الصوت">🔊 Play Audio</button>
+                        </div>
+                        <h3 id="listeningQuestion" class="question-text" style="margin-top: 1.5rem;"></h3>
+                        <div id="listeningOptions" class="options-container">
+                            <!-- Options will be generated -->
+                        </div>
                     </div>
                 </div>
 

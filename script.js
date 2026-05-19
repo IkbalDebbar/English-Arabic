@@ -16,6 +16,8 @@ let appState = {
     quizType: null,
     matchingPairs: [],
     currentRevisionIndex: 0,
+    questionsAttempted: 0,
+    currentQuestion: null,
 };
 
 const translations = {
@@ -47,7 +49,7 @@ const translations = {
         'Back to Quiz Menu': 'Back to Quiz Menu',
         'Made for English Learners': 'Made for English Learners',
         'Correct!': 'Correct! Well done! 🎉',
-        'Incorrect!': 'Incorrect! Try again.',
+        'Incorrect!': 'Incorrect! Review the correct answer.',
         'Excellent': 'Excellent! You are a vocabulary master! 🏆',
         'Good': 'Good job! Keep practicing! 👍',
         'Average': 'Not bad! Study more words! 📚',
@@ -126,6 +128,10 @@ function switchLanguage(lang) {
     
     // Update all text elements
     updateLanguageContent();
+    loadVocabulary();
+    if (document.getElementById('revision').classList.contains('active')) {
+        displayRevisionCard();
+    }
 }
 
 function updateLanguageContent() {
@@ -181,9 +187,17 @@ function setupEventListeners() {
     });
     
     // Quiz buttons
-    document.getElementById('mcqBtn').addEventListener('click', () => startQuiz('mcq'));
-    document.getElementById('fillBtn').addEventListener('click', () => startQuiz('fill'));
+    document.getElementById('mcqBtn').addEventListener('click', prepareMCQChoice);
+    document.getElementById('fillBtn').addEventListener('click', prepareFillChoice);
+    document.getElementById('mcqEnglishBtn').addEventListener('click', () => startQuiz('mcq'));
+    document.getElementById('mcqArabicBtn').addEventListener('click', () => startQuiz('mcq_ar_en'));
+    document.getElementById('fillEnglishBtn').addEventListener('click', () => startQuiz('fill'));
+    document.getElementById('fillArabicBtn').addEventListener('click', () => startQuiz('fill_ar'));
     document.getElementById('matchBtn').addEventListener('click', () => startQuiz('match'));
+    document.getElementById('spellingBtn').addEventListener('click', () => startQuiz('spelling'));
+    document.getElementById('listeningBtn').addEventListener('click', () => startQuiz('listening'));
+    document.getElementById('spellingPlayBtn').addEventListener('click', playSpellingAudio);
+    document.getElementById('listeningPlayBtn').addEventListener('click', playListeningAudio);
     
     // Quiz controls
     document.getElementById('checkAnswerBtn').addEventListener('click', checkAnswer);
@@ -246,16 +260,76 @@ function loadVocabulary() {
     appState.vocabulary.forEach(word => {
         const wordCard = document.createElement('div');
         wordCard.className = 'word-card';
-        wordCard.innerHTML = `
-            <div class="word-card-header">
-                <div>
-                    <div class="word-english">${word.english}</div>
-                    <div class="word-arabic">${word.arabic}</div>
-                </div>
-                <button class="delete-btn" onclick="deleteWord(${word.id})">✕</button>
-            </div>
-            ${word.example ? `<div class="word-example">"${word.example}"</div>` : ''}
-        `;
+
+        const header = document.createElement('div');
+        header.className = 'word-card-header';
+
+        const textContainer = document.createElement('div');
+        const englishEl = document.createElement('div');
+        englishEl.className = 'word-english';
+        englishEl.textContent = word.english;
+        const arabicEl = document.createElement('div');
+        arabicEl.className = 'word-arabic';
+        arabicEl.textContent = word.arabic;
+
+        textContainer.appendChild(englishEl);
+        textContainer.appendChild(arabicEl);
+
+        const actions = document.createElement('div');
+        actions.className = 'word-actions';
+
+        const ukButton = document.createElement('button');
+        ukButton.className = 'btn spell-btn';
+        ukButton.type = 'button';
+        ukButton.textContent = appState.language === 'en' ? 'UK' : 'بريطانى';
+        ukButton.addEventListener('click', () => speakWord(word.english, 'en-GB'));
+
+        const usButton = document.createElement('button');
+        usButton.className = 'btn spell-btn';
+        usButton.type = 'button';
+        usButton.textContent = appState.language === 'en' ? 'US' : 'أمريكي';
+        usButton.addEventListener('click', () => speakWord(word.english, 'en-US'));
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = '✕';
+        deleteBtn.addEventListener('click', () => deleteWord(word.id));
+
+        actions.appendChild(ukButton);
+        actions.appendChild(usButton);
+        actions.appendChild(deleteBtn);
+
+        header.appendChild(textContainer);
+        header.appendChild(actions);
+        wordCard.appendChild(header);
+
+        if (word.example) {
+            const exampleEl = document.createElement('div');
+            exampleEl.className = 'word-example';
+            exampleEl.textContent = `"${word.example}"`;
+            wordCard.appendChild(exampleEl);
+
+            const sentenceActions = document.createElement('div');
+            sentenceActions.className = 'sentence-actions';
+
+            const ukSentenceBtn = document.createElement('button');
+            ukSentenceBtn.className = 'btn spell-btn';
+            ukSentenceBtn.type = 'button';
+            ukSentenceBtn.textContent = appState.language === 'en' ? 'UK' : 'بريطانى';
+            ukSentenceBtn.addEventListener('click', () => speakWord(word.example, 'en-GB'));
+
+            const usSentenceBtn = document.createElement('button');
+            usSentenceBtn.className = 'btn spell-btn';
+            usSentenceBtn.type = 'button';
+            usSentenceBtn.textContent = appState.language === 'en' ? 'US' : 'أمريكي';
+            usSentenceBtn.addEventListener('click', () => speakWord(word.example, 'en-US'));
+
+            sentenceActions.appendChild(ukSentenceBtn);
+            sentenceActions.appendChild(usSentenceBtn);
+            wordCard.appendChild(sentenceActions);
+        }
+
         container.appendChild(wordCard);
     });
 }
@@ -304,6 +378,77 @@ function showTab(tabName) {
 // QUIZ FUNCTIONALITY
 // ========================================
 
+function prepareFillChoice() {
+    if (appState.vocabulary.length < 2) {
+        alert(appState.language === 'en' ? 
+            'Please add at least 2 words to start the quiz' : 
+            'يرجى إضافة 2 على الأقل من الكلمات لبدء الاختبار');
+        return;
+    }
+
+    resetQuizState();
+    appState.quizType = 'fill_choice';
+
+    document.getElementById('quizMenu').style.display = 'none';
+    document.getElementById('quizContainer').style.display = 'block';
+    document.getElementById('scoreSection').style.display = 'none';
+    document.getElementById('checkAnswerBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    showFillChoiceMenu();
+}
+
+function prepareMCQChoice() {
+    if (appState.vocabulary.length < 2) {
+        alert(appState.language === 'en' ? 
+            'Please add at least 2 words to start the quiz' : 
+            'يرجى إضافة 2 على الأقل من الكلمات لبدء الاختبار');
+        return;
+    }
+
+    resetQuizState();
+    appState.quizType = 'mcq_choice';
+
+    document.getElementById('quizMenu').style.display = 'none';
+    document.getElementById('quizContainer').style.display = 'block';
+    document.getElementById('scoreSection').style.display = 'none';
+    document.getElementById('checkAnswerBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    showMCQChoiceMenu();
+}
+
+function resetQuizState() {
+    appState.currentQuestionIndex = 0;
+    appState.score = 0;
+    appState.questionsAttempted = 0;
+    appState.correctCount = 0;
+    appState.incorrectCount = 0;
+    appState.selectedAnswers = [];
+    appState.currentQuestion = null;
+    appState.matchingPairs = [];
+    updateLiveScore();
+    const feedbackElement = document.getElementById('feedback');
+    if (feedbackElement) {
+        feedbackElement.innerHTML = '';
+        feedbackElement.classList.remove('show', 'correct', 'incorrect');
+    }
+}
+
+function showFillChoiceMenu() {
+    document.querySelectorAll('.quiz-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById('fillChoiceMenu').style.display = 'block';
+    document.getElementById('fillChoiceMenu').classList.add('active');
+}
+
+function showMCQChoiceMenu() {
+    document.querySelectorAll('.quiz-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById('mcqChoiceMenu').style.display = 'block';
+    document.getElementById('mcqChoiceMenu').classList.add('active');
+}
+
 function startQuiz(type) {
     if (appState.vocabulary.length < 2) {
         alert(appState.language === 'en' ? 
@@ -315,74 +460,99 @@ function startQuiz(type) {
     appState.quizType = type;
     appState.currentQuestionIndex = 0;
     appState.score = 0;
+    appState.questionsAttempted = 0;
+    appState.correctCount = 0;
+    appState.incorrectCount = 0;
     appState.selectedAnswers = [];
+    appState.currentQuestion = null;
     appState.matchingPairs = [];
     
-    // Generate quiz questions
-    const quizSize = Math.min(appState.vocabulary.length, 10);
-    appState.currentQuiz = shuffleArray([...appState.vocabulary]).slice(0, quizSize);
-    
-    // Show quiz container and hide menu
     document.getElementById('quizMenu').style.display = 'none';
     document.getElementById('quizContainer').style.display = 'block';
     document.getElementById('scoreSection').style.display = 'none';
+    document.getElementById('checkAnswerBtn').style.display = 'inline-block';
+    document.getElementById('nextBtn').style.display = 'none';
     
-    // Display first question
+    document.getElementById('fillChoiceMenu').style.display = 'none';
+    document.getElementById('mcqChoiceMenu').style.display = 'none';
     displayQuestion();
 }
 
 function displayQuestion() {
     const questionNum = appState.currentQuestionIndex + 1;
-    const totalQuestions = appState.currentQuiz.length;
-    
-    // Update progress
     document.getElementById('questionNumber').textContent = questionNum;
-    document.getElementById('totalQuestions').textContent = totalQuestions;
-    document.getElementById('progressFill').style.width = (questionNum / totalQuestions * 100) + '%';
+    document.getElementById('totalQuestions').textContent = '∞';
+    document.getElementById('progressFill').style.width = '100%';
+    updateLiveScore();
     
     // Hide all quiz sections
     document.querySelectorAll('.quiz-section').forEach(section => {
         section.classList.remove('active');
+        section.style.display = 'none';
     });
+    document.getElementById('mcqChoiceMenu').style.display = 'none';
+    document.getElementById('fillChoiceMenu').style.display = 'none';
+    document.getElementById('fillSection').style.display = 'none';
+    document.getElementById('spellingSection').style.display = 'none';
+    document.getElementById('listeningSection').style.display = 'none';
     
     // Clear feedback
     document.getElementById('feedback').innerHTML = '';
     document.getElementById('feedback').classList.remove('show', 'correct', 'incorrect');
     
-    if (appState.quizType === 'mcq') {
+    if (appState.quizType === 'mcq' || appState.quizType === 'mcq_ar_en') {
         displayMCQ();
-    } else if (appState.quizType === 'fill') {
+    } else if (appState.quizType === 'fill' || appState.quizType === 'fill_ar') {
         displayFill();
     } else if (appState.quizType === 'match') {
         displayMatching();
+    } else if (appState.quizType === 'spelling') {
+        displaySpelling();
+    } else if (appState.quizType === 'listening') {
+        displayListening();
     }
 }
 
+function updateLiveScore() {
+    document.getElementById('liveScore').textContent = appState.score;
+    document.getElementById('liveCorrect').textContent = appState.correctCount || 0;
+    document.getElementById('liveIncorrect').textContent = appState.incorrectCount || 0;
+    document.getElementById('liveAttempts').textContent = appState.questionsAttempted;
+}
+
+
 function displayMCQ() {
-    document.getElementById('mcqSection').classList.add('active');
-    
-    const currentWord = appState.currentQuiz[appState.currentQuestionIndex];
-    document.getElementById('mcqQuestion').textContent = 
-        appState.language === 'en' ? 
-        `What is the Arabic translation of "${currentWord.english}"?` :
-        `ما هي الترجمة العربية لـ "${currentWord.english}"؟`;
-    
-    // Generate options
-    const options = [currentWord.arabic];
+    const mcqSection = document.getElementById('mcqSection');
+    mcqSection.classList.add('active');
+    mcqSection.style.display = 'block';
+    appState.currentQuestion = getRandomWord();
+    const currentWord = appState.currentQuestion;
+    const reverseMode = appState.quizType === 'mcq_ar_en';
+    const promptText = reverseMode ?
+        (appState.language === 'en' ?
+            `What is the English translation of "${currentWord.arabic}"?` :
+            `ما الترجمة الإنجليزية لـ "${currentWord.arabic}"؟`) :
+        (appState.language === 'en' ?
+            `What is the Arabic translation of "${currentWord.english}"?` :
+            `ما هي الترجمة العربية لـ "${currentWord.english}"؟`);
+
+    document.getElementById('mcqQuestion').textContent = promptText;
+
+    const correctAnswer = reverseMode ? currentWord.english : currentWord.arabic;
+    const options = [correctAnswer];
     const otherWords = appState.vocabulary.filter(w => w.id !== currentWord.id);
-    
+
     while (options.length < 4 && otherWords.length > 0) {
         const randomIndex = Math.floor(Math.random() * otherWords.length);
-        options.push(otherWords[randomIndex].arabic);
+        options.push(reverseMode ? otherWords[randomIndex].english : otherWords[randomIndex].arabic);
         otherWords.splice(randomIndex, 1);
     }
-    
+
     const shuffledOptions = shuffleArray(options);
-    
     const optionsContainer = document.getElementById('mcqOptions');
     optionsContainer.innerHTML = '';
-    
-    shuffledOptions.forEach((option, index) => {
+
+    shuffledOptions.forEach(option => {
         const btn = document.createElement('button');
         btn.className = 'option';
         btn.textContent = option;
@@ -401,13 +571,21 @@ function selectMCQOption(option, element) {
 }
 
 function displayFill() {
+    document.getElementById('fillSection').style.display = 'block';
     document.getElementById('fillSection').classList.add('active');
     
-    const currentWord = appState.currentQuiz[appState.currentQuestionIndex];
+    appState.currentQuestion = getRandomWord();
+    const currentWord = appState.currentQuestion;
+    const reverseMode = appState.quizType === 'fill_ar';
+    
     document.getElementById('fillQuestion').textContent = 
         appState.language === 'en' ? 
-        `Fill in the Arabic translation: "${currentWord.english}" = ____` :
-        `أكمل الترجمة العربية: "${currentWord.english}" = ____`;
+        (reverseMode ?
+            `Fill in the English translation: "${currentWord.arabic}" = ____` :
+            `Fill in the Arabic translation: "${currentWord.english}" = ____`) :
+        (reverseMode ?
+            `أكمل الترجمة الإنجليزية: "${currentWord.arabic}" = ____` :
+            `أكمل الترجمة العربية: "${currentWord.english}" = ____`);
     
     const fillInput = document.getElementById('fillAnswer');
     fillInput.value = '';
@@ -415,11 +593,13 @@ function displayFill() {
 }
 
 function displayMatching() {
-    document.getElementById('matchSection').classList.add('active');
+    const matchSection = document.getElementById('matchSection');
+    matchSection.classList.add('active');
+    matchSection.style.display = 'block';
     
-    // For matching, we'll show multiple words at once
-    const matchSize = Math.min(5, appState.currentQuiz.length);
-    const matchWords = appState.currentQuiz.slice(0, matchSize);
+    const matchSize = Math.min(5, appState.vocabulary.length);
+    const matchWords = shuffleArray([...appState.vocabulary]).slice(0, matchSize);
+    appState.currentQuestion = { matchWords };
     
     const leftContainer = document.getElementById('matchLeft');
     const rightContainer = document.getElementById('matchRight');
@@ -431,18 +611,19 @@ function displayMatching() {
     
     matchWords.forEach((word, index) => {
         const leftItem = document.createElement('div');
-        leftItem.className = 'match-item';
+        leftItem.className = 'match-item left';
         leftItem.textContent = word.english;
         leftItem.dataset.index = index;
+        leftItem.dataset.wordId = word.id;
         leftItem.addEventListener('click', () => selectMatchItem(leftItem, 'left'));
         leftContainer.appendChild(leftItem);
     });
     
-    shuffledRight.forEach((word, index) => {
+    shuffledRight.forEach(word => {
         const rightItem = document.createElement('div');
-        rightItem.className = 'match-item';
+        rightItem.className = 'match-item right';
         rightItem.textContent = word.arabic;
-        rightItem.dataset.index = index;
+        rightItem.dataset.wordId = word.id;
         rightItem.addEventListener('click', () => selectMatchItem(rightItem, 'right'));
         rightContainer.appendChild(rightItem);
     });
@@ -475,54 +656,102 @@ function selectMatchItem(element, side) {
 }
 
 function checkMatchingPair() {
-    // In a real scenario, we'd validate the pairing
-    // For now, just move to next
-    selectedLeftItem.classList.remove('selected');
-    selectedRightItem.classList.remove('selected');
-    selectedLeftItem = null;
-    selectedRightItem = null;
-    appState.score++;
+    // Validate if the pairing is correct by comparing wordIds
+    const leftWordId = selectedLeftItem.dataset.wordId;
+    const rightWordId = selectedRightItem.dataset.wordId;
+    
+    const isCorrect = leftWordId === rightWordId;
+    
+    appState.questionsAttempted++;
+    if (isCorrect) {
+        appState.score++;
+        appState.correctCount = (appState.correctCount || 0) + 1;
+        selectedLeftItem.classList.add('correct-match');
+        selectedRightItem.classList.add('correct-match');
+        showFeedback(true, getTranslation('Correct!'), null);
+    } else {
+        appState.incorrectCount = (appState.incorrectCount || 0) + 1;
+        selectedLeftItem.classList.add('incorrect-match');
+        selectedRightItem.classList.add('incorrect-match');
+        
+        // Find the correct match for the selected left item
+        const correctRightItem = document.querySelector(`.match-item.right[data-word-id="${leftWordId}"]`);
+        const correctAnswer = correctRightItem ? correctRightItem.textContent : 'Unknown';
+        showFeedback(false, getTranslation('Incorrect!'), correctAnswer);
+    }
+    
+    updateLiveScore();
+    
+    // Remove the matched/incorrect items after a delay
+    setTimeout(() => {
+        selectedLeftItem.classList.remove('selected', 'correct-match', 'incorrect-match');
+        selectedRightItem.classList.remove('selected', 'correct-match', 'incorrect-match');
+        selectedLeftItem = null;
+        selectedRightItem = null;
+    }, 1000);
 }
 
 function checkAnswer() {
-    const currentWord = appState.currentQuiz[appState.currentQuestionIndex];
+    const currentWord = appState.currentQuestion;
     let isCorrect = false;
+    let correctAnswerText = '';
     
-    if (appState.quizType === 'mcq') {
-        isCorrect = appState.selectedAnswers[appState.currentQuestionIndex] === currentWord.arabic;
-    } else if (appState.quizType === 'fill') {
+    if (appState.quizType === 'mcq' || appState.quizType === 'mcq_ar_en') {
+        const expectedAnswer = appState.quizType === 'mcq' ? currentWord.arabic : currentWord.english;
+        isCorrect = appState.selectedAnswers[appState.currentQuestionIndex] === expectedAnswer;
+        correctAnswerText = expectedAnswer;
+    } else if (appState.quizType === 'fill' || appState.quizType === 'fill_ar') {
         const userAnswer = document.getElementById('fillAnswer').value.trim().toLowerCase();
-        const correctAnswer = currentWord.arabic.toLowerCase();
+        const correctAnswer = appState.quizType === 'fill' ? currentWord.arabic.toLowerCase() : currentWord.english.toLowerCase();
         isCorrect = userAnswer === correctAnswer;
+        correctAnswerText = appState.quizType === 'fill' ? currentWord.arabic : currentWord.english;
+    } else if (appState.quizType === 'spelling') {
+        const userAnswer = document.getElementById('spellingAnswer').value.trim().toLowerCase();
+        const correctAnswer = currentWord.english.toLowerCase();
+        isCorrect = userAnswer === correctAnswer;
+        correctAnswerText = currentWord.english;
+    } else if (appState.quizType === 'listening') {
+        const selectedAnswer = appState.selectedAnswers[appState.currentQuestionIndex];
+        isCorrect = selectedAnswer === currentWord.arabic;
+        correctAnswerText = currentWord.arabic;
+    } else if (appState.quizType === 'match') {
+        // Matching is handled separately in checkMatchingPair
+        return;
     }
     
+    appState.questionsAttempted++;
     if (isCorrect) {
         appState.score++;
-        showFeedback(true, getTranslation('Correct!'));
+        appState.correctCount = (appState.correctCount || 0) + 1;
+        showFeedback(true, getTranslation('Correct!'), null);
     } else {
-        showFeedback(false, getTranslation('Incorrect!'));
+        appState.incorrectCount = (appState.incorrectCount || 0) + 1;
+        showFeedback(false, getTranslation('Incorrect!'), correctAnswerText);
     }
+    updateLiveScore();
     
     document.getElementById('checkAnswerBtn').style.display = 'none';
     document.getElementById('nextBtn').style.display = 'inline-block';
 }
 
-function showFeedback(isCorrect, message) {
+function showFeedback(isCorrect, message, correctAnswer = null) {
     const feedbackElement = document.getElementById('feedback');
-    feedbackElement.textContent = message;
+    let feedbackHTML = `<div class="feedback-message">${message}</div>`;
+    
+    if (!isCorrect && correctAnswer) {
+        const correctLabel = appState.language === 'en' ? 'Correct answer: ' : 'الإجابة الصحيحة: ';
+        feedbackHTML += `<div class="correct-answer-display">${correctLabel}<strong>${correctAnswer}</strong></div>`;
+    }
+    
+    feedbackElement.innerHTML = feedbackHTML;
     feedbackElement.classList.add('show', isCorrect ? 'correct' : 'incorrect');
 }
 
 function nextQuestion() {
     appState.currentQuestionIndex++;
-    
-    if (appState.currentQuestionIndex < appState.currentQuiz.length) {
-        document.getElementById('checkAnswerBtn').style.display = 'inline-block';
-        document.getElementById('nextBtn').style.display = 'none';
-        displayQuestion();
-    } else {
-        showScore();
-    }
+    document.getElementById('checkAnswerBtn').style.display = 'inline-block';
+    document.getElementById('nextBtn').style.display = 'none';
+    displayQuestion();
 }
 
 function showScore() {
@@ -608,6 +837,89 @@ function nextRevisionCard() {
 }
 
 // ========================================
+// SPELLING QUIZ
+// ========================================
+
+function displaySpelling() {
+    document.getElementById('spellingSection').classList.add('active');
+    document.getElementById('spellingSection').style.display = 'block';
+    
+    appState.currentQuestion = getRandomWord();
+    const currentWord = appState.currentQuestion;
+    
+    const promptText = appState.language === 'en' ?
+        'Listen to the audio and type the English word' :
+        'استمع إلى الصوت واكتب الكلمة الإنجليزية';
+    
+    document.getElementById('spellingQuestion').textContent = promptText;
+    document.getElementById('spellingAnswer').value = '';
+    document.getElementById('spellingAnswer').focus();
+}
+
+function playSpellingAudio() {
+    if (!appState.currentQuestion) return;
+    const word = appState.currentQuestion;
+    speakWord(word.english, 'en-US');
+}
+
+// ========================================
+// LISTENING COMPREHENSION QUIZ
+// ========================================
+
+function displayListening() {
+    document.getElementById('listeningSection').classList.add('active');
+    document.getElementById('listeningSection').style.display = 'block';
+    
+    appState.currentQuestion = getRandomWord();
+    const currentWord = appState.currentQuestion;
+    
+    document.getElementById('listeningQuestion').textContent = 
+        appState.language === 'en' ?
+        'What is the meaning of the word you just heard?' :
+        '\u0645\u0627 \u0647\u0648 \u0645\u0639\u0646\u0649 \u0627\u0644\u0643\u0644\u0645\u0629 \u0627\u0644\u062a\u064a \u0633\u0645\u0639\u062a\u0647\u0627 \u0644\u0644\u062a\u0648';
+    
+    // Generate listening comprehension options
+    const correctAnswer = currentWord.arabic;
+    const options = [correctAnswer];
+    const otherWords = appState.vocabulary.filter(w => w.id !== currentWord.id);
+    
+    while (options.length < 4 && otherWords.length > 0) {
+        const randomIndex = Math.floor(Math.random() * otherWords.length);
+        options.push(otherWords[randomIndex].arabic);
+        otherWords.splice(randomIndex, 1);
+    }
+    
+    const shuffledOptions = shuffleArray(options);
+    const optionsContainer = document.getElementById('listeningOptions');
+    optionsContainer.innerHTML = '';
+    
+    shuffledOptions.forEach(option => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.textContent = option;
+        btn.addEventListener('click', () => selectListeningOption(option, btn));
+        optionsContainer.appendChild(btn);
+    });
+    
+    // Auto-play audio on display
+    setTimeout(() => playListeningAudio(), 500);
+}
+
+function playListeningAudio() {
+    if (!appState.currentQuestion) return;
+    const word = appState.currentQuestion;
+    speakWord(word.english, 'en-US');
+}
+
+function selectListeningOption(option, element) {
+    document.querySelectorAll('#listeningOptions .option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    element.classList.add('selected');
+    appState.selectedAnswers[appState.currentQuestionIndex] = option;
+}
+
+// ========================================
 // UTILITY FUNCTIONS
 // ========================================
 
@@ -618,6 +930,43 @@ function shuffleArray(array) {
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+}
+
+function getRandomWord() {
+    if (appState.vocabulary.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * appState.vocabulary.length);
+    return appState.vocabulary[randomIndex];
+}
+
+function speakWord(word, voiceLang) {
+    if (!window.speechSynthesis) {
+        alert(appState.language === 'en' ? 'Speech synthesis is not supported in this browser.' : 'الميزة غير مدعومة في هذا المتصفح.');
+        return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(word);
+    const voice = getSpeechVoice(voiceLang);
+
+    if (voice) {
+        utterance.voice = voice;
+    }
+    utterance.lang = voiceLang;
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+}
+
+function getSpeechVoice(lang) {
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices.length) {
+        window.speechSynthesis.onvoiceschanged = () => getSpeechVoice(lang);
+        return null;
+    }
+
+    const exactVoice = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase());
+    if (exactVoice) return exactVoice;
+
+    return voices.find(v => v.lang.toLowerCase().startsWith(lang.slice(0, 2).toLowerCase())) || voices[0];
 }
 
 // Auto-translation function

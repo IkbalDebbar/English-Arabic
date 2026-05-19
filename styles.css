@@ -448,6 +448,27 @@ body.ltr {
     justify-content: space-between;
     align-items: start;
     margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.word-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.spell-btn {
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--primary-color);
+    border: 1px solid rgba(37, 99, 235, 0.25);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    min-width: 52px;
+}
+
+.spell-btn:hover {
+    background: rgba(37, 99, 235, 0.12);
 }
 
 .word-english {
@@ -469,6 +490,12 @@ body.ltr {
     padding: 0.75rem;
     background: rgba(0, 0, 0, 0.02);
     border-radius: var(--radius-md);
+}
+
+.sentence-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }
 
 .delete-btn {
@@ -526,8 +553,40 @@ body.ltr {
 .progress-info {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     font-weight: 600;
+}
+
+.quiz-score-info {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(100px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.quiz-score-info > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.score-label {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#liveScore,
+#liveCorrect,
+#liveIncorrect,
+#liveAttempts {
+    min-width: 2rem;
+    padding: 0.35rem 0.6rem;
+    background: rgba(37, 99, 235, 0.08);
+    border-radius: var(--radius-sm);
+    color: var(--primary-color);
+    font-weight: 700;
 }
 
 .progress-bar {
@@ -535,6 +594,7 @@ body.ltr {
     background: var(--border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
+}
 }
 
 .progress-fill {
@@ -623,6 +683,45 @@ body.ltr {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+/* Spelling & Listening Quiz */
+.spelling-instruction,
+.listening-instruction {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.spelling-controls,
+.listening-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+/* Feedback with Correct Answer */
+.feedback-message {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.correct-answer-display {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background-color: rgba(34, 197, 94, 0.1);
+    border-left: 3px solid rgb(34, 197, 94);
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: var(--text-color);
+}
+
+.correct-answer-display strong {
+    color: rgb(34, 197, 94);
+    font-weight: 700;
+}
+
 /* Matching */
 .matching-container {
     display: grid;
@@ -673,6 +772,18 @@ body.ltr {
 .match-item.selected {
     border-color: var(--primary-color);
     background: rgba(37, 99, 235, 0.1);
+}
+
+.match-item.correct-match {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+}
+
+.match-item.incorrect-match {
+    border-color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
 }
 
 /* Quiz Controls */
@@ -752,12 +863,10 @@ body.ltr {
     font-size: 2rem;
     font-weight: 700;
     transition: var(--transition);
-    transform-style: preserve-3d;
-    transform: rotateY(0deg);
 }
 
 .revision-word.flipped {
-    transform: rotateY(180deg);
+    transform: scale(1.02);
 }
 
 .revision-controls {
